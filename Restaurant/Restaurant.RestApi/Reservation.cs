@@ -8,6 +8,10 @@
             string name,
             int quantity)
         {
+            if (quantity < 1)
+                throw new ArgumentOutOfRangeException(nameof(quantity),
+                    "The value must be a positive (non-zero) number.");
+
             At = at;
             Email = email;
             Name = name;

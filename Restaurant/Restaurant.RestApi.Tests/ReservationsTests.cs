@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc.Testing;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -17,7 +19,7 @@ namespace Restaurant.RestApi.Tests
         {
             var response = await PostReservation(new
             {
-                date = "2023-03-10 19:00",
+                at = "2023-03-10 19:00",
                 email = "katinka@example.com",
                 name = "Katinka Ingabogovinanana",
                 quantity = 2
@@ -28,27 +30,55 @@ namespace Restaurant.RestApi.Tests
                 $"Actual status code: {response.StatusCode}.");
         }
 
-        [Fact]
-        public async Task PostValidReservationWhenDatabaseIsEmpty()
+        [Theory]
+        [InlineData("2023-11-24 19:00", "juliad@example.net", "Julia Domna", 5)]
+        [InlineData("2024-02-13 18:15", "x@example.com", "Xenia Ng", 9)]
+        [InlineData("2023-08-23 16:55", "kite@example.edu", null, 2)]
+        public async Task PostValidReservationWhenDatabaseIsEmpty(string at, string email, string name, int quantity)
         {
             var db = new FakeDatabase();
             var sut = new ReservationsController(db);
 
             var dto = new ReservationDto
             {
-                At = "2023-11-24 19:00",
-                Email = "juliad@example.net",
-                Name = "Julia Domna",
-                Quantity = 5
+                At = at,
+                Email = email,
+                Name = name,
+                Quantity = quantity
             };
             await sut.Post(dto);
 
             var expected = new Reservation(
-                new DateTime(2023, 11, 24, 19, 0, 0),
+                DateTime.Parse(dto.At, CultureInfo.InvariantCulture),
                 dto.Email,
-                dto.Name,
+                dto.Name ?? "",
                 dto.Quantity);
             Assert.Contains(expected, db);
+        }
+
+        [Theory]
+        [InlineData(null, "j@example.net", "Jay Xerxes", 1)]
+        [InlineData("not a date", "j@example.net", "Jay Xerxes", 1)]
+        [InlineData("2023-11-30 20:01", null, "Thora", 19)]
+        [InlineData("2022-01-02 12:10", "3@example.org", "3 Beard", 0)]
+        [InlineData("2045-12-31 11:45", "git@example.com", "Gil Tan", -1)]
+        public async Task PostInvalidReservation(string at, string email, string name, int quantity)
+        {
+            var response = await PostReservation(new { at, email, name, quantity });
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(-1)]
+        public void QuantityMustBePositive(int invalidQuantity)
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() => new Reservation(
+                new DateTime(2024, 8, 19, 11, 30, 0),
+                "mail@example.com",
+                "Marie Ilsoe",
+                invalidQuantity));
         }
 
         private async Task<HttpResponseMessage> PostReservation(object reservation)

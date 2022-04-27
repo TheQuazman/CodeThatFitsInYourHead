@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using System.Globalization;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -17,18 +18,21 @@ namespace Restaurant.RestApi
 
         // POST <ReservationsController>
         [HttpPost]
-        public async Task Post(ReservationDto dto)
+        public async Task<ActionResult> Post(ReservationDto dto)
         {
             if (dto is null)
                 throw new ArgumentNullException(nameof(dto));
+            if (!DateTime.TryParse(dto.At, out var d))
+                return new BadRequestResult();
+            if (dto.Email is null)
+                return new BadRequestResult();
+            if (dto.Quantity < 1)
+                return new BadRequestResult();
 
-            await Repository.Create(
-                new Reservation(
-                    new DateTime(2023, 11, 24, 19, 0, 0),
-                    "juliad@example.net",
-                    "Julia Domna",
-                    5))
-                .ConfigureAwait(false);
+            var r = new Reservation(d, dto.Email, dto.Name ?? "", dto.Quantity);
+            await Repository.Create(r).ConfigureAwait(false);
+
+            return new NoContentResult();
         }
     }
 }
