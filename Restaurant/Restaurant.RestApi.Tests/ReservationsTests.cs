@@ -34,6 +34,7 @@ namespace Restaurant.RestApi.Tests
         [InlineData("2023-11-24 19:00", "juliad@example.net", "Julia Domna", 5)]
         [InlineData("2024-02-13 18:15", "x@example.com", "Xenia Ng", 9)]
         [InlineData("2023-08-23 16:55", "kite@example.edu", null, 2)]
+        [InlineData("2022-03-18 17:30", "shli@example.org", "Shanghai Li", 5)]
         public async Task PostValidReservationWhenDatabaseIsEmpty(string at, string email, string name, int quantity)
         {
             var db = new FakeDatabase();
@@ -79,6 +80,53 @@ namespace Restaurant.RestApi.Tests
                 "mail@example.com",
                 "Marie Ilsoe",
                 invalidQuantity));
+        }
+
+        [Fact]
+        public async void OverbookAttempt()
+        {
+            using var service = new RestaurantApiFactory();
+            await service.PostReservation(new
+            {
+                at = "2022-03-18 17:30",
+                email = "mars@example.edu",
+                name = "Marina Seminova",
+                quantity = 6
+            });
+
+            var response = await service.PostReservation(new
+            {
+                at = "2022-03-18 17:30",
+                email = "shli@example.org",
+                name = "Shanghai Li",
+                quantity = 5
+            });
+
+            Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+        }
+
+        [Fact]
+        public async void BookTableWhenFreeSeatingIsAvailable()
+        {
+            using var service = new RestaurantApiFactory();
+            await service.PostReservation(new
+            {
+                at = "2023-01-02 18:15",
+                email = "net@example.net",
+                name = "Ned Tucker",
+                quantity = 2
+            });
+
+            var response = await service.PostReservation(new
+            {
+                at = "2023-01-01 18:30",
+                email = "kant@example.edu",
+                name = "Katrine Nohr Troelsen",
+                quantity = 4
+            });
+
+            Assert.True(response.IsSuccessStatusCode,
+                $"Actual status code: {response.StatusCode}.");
         }
 
         private async Task<HttpResponseMessage> PostReservation(object reservation)

@@ -29,6 +29,11 @@ namespace Restaurant.RestApi
             if (dto.Quantity < 1)
                 return new BadRequestResult();
 
+            var reservations = await Repository.ReadReservations(d).ConfigureAwait(false);
+            int reservedSeats = reservations.Sum(r => r.Quantity);
+            if(10 < reservedSeats + dto.Quantity)
+                return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+
             var r = new Reservation(d, dto.Email, dto.Name ?? "", dto.Quantity);
             await Repository.Create(r).ConfigureAwait(false);
 

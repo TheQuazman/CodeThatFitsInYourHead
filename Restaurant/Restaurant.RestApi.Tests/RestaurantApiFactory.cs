@@ -9,6 +9,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using System.Text.Json;
 
 namespace Restaurant.RestApi.Tests
 {
@@ -24,6 +25,15 @@ namespace Restaurant.RestApi.Tests
                 services.RemoveAll<IReservationsRepository>();
                 services.AddSingleton<IReservationsRepository>(new FakeDatabase());
             });
+        }
+
+        internal async Task<HttpResponseMessage> PostReservation(object reservation)
+        {
+            var client = this.CreateClient();
+
+            string json = JsonSerializer.Serialize(reservation);
+            using var content = new StringContent(json, Encoding.UTF8, "application/json");
+            return await client.PostAsync("reservations", content);
         }
     }
 }
