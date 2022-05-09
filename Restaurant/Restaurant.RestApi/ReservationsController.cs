@@ -22,19 +22,20 @@ namespace Restaurant.RestApi
         {
             if (dto is null)
                 throw new ArgumentNullException(nameof(dto));
-            if (!DateTime.TryParse(dto.At, out var d))
-                return new BadRequestResult();
-            if (dto.Email is null)
-                return new BadRequestResult();
-            if (dto.Quantity < 1)
+            
+            Reservation? r = dto.Validate();
+            if (r is null)
                 return new BadRequestResult();
 
-            var reservations = await Repository.ReadReservations(d).ConfigureAwait(false);
+
+            var reservations = await Repository
+                .ReadReservations(r.At)
+                .ConfigureAwait(false);
             int reservedSeats = reservations.Sum(r => r.Quantity);
             if(10 < reservedSeats + dto.Quantity)
-                return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+                return new StatusCodeResult(
+                    StatusCodes.Status500InternalServerError);
 
-            var r = new Reservation(d, dto.Email, dto.Name ?? "", dto.Quantity);
             await Repository.Create(r).ConfigureAwait(false);
 
             return new NoContentResult();
