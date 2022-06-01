@@ -1,5 +1,6 @@
 
 using Restaurant.RestApi;
+using Restaurant.RestApi.Settings;
 using Microsoft.Extensions.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,6 +10,10 @@ builder.Services.AddControllers();
 
 var connStr = builder.Configuration.GetConnectionString("Restaurant");
 builder.Services.AddSingleton<IReservationsRepository>(new SqlReservationsRepository(connStr));
+
+var settings = new RestaurantSettings();
+builder.Configuration.Bind("Restaurant", settings);
+builder.Services.AddSingleton(settings.ToMaitreD());
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

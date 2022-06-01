@@ -4,6 +4,7 @@
     {
         Task Create(Reservation reservation);
 
-        Task<IReadOnlyCollection<Reservation>> ReadReservations(DateTime dateTime);
+        Task<IReadOnlyCollection<Reservation>> ReadReservations(
+            DateTime dateTime);
     }
 }

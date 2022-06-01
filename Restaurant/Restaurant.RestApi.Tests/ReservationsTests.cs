@@ -34,11 +34,11 @@ namespace Restaurant.RestApi.Tests
         [InlineData("2023-11-24 19:00", "juliad@example.net", "Julia Domna", 5)]
         [InlineData("2024-02-13 18:15", "x@example.com", "Xenia Ng", 9)]
         [InlineData("2023-08-23 16:55", "kite@example.edu", null, 2)]
-        [InlineData("2022-03-18 17:30", "shli@example.org", "Shanghai Li", 5)]
+        [InlineData("2023-03-18 17:30", "shli@example.org", "Shanghai Li", 5)]
         public async Task PostValidReservationWhenDatabaseIsEmpty(string at, string email, string name, int quantity)
         {
             var db = new FakeDatabase();
-            var sut = new ReservationsController(db);
+            var sut = new ReservationsController(db, Some.MaitreD);
 
             var dto = new ReservationDto
             {
@@ -88,7 +88,7 @@ namespace Restaurant.RestApi.Tests
             using var service = new RestaurantApiFactory();
             await service.PostReservation(new
             {
-                at = "2022-03-18 17:30",
+                at = "2023-03-18 17:30",
                 email = "mars@example.edu",
                 name = "Marina Seminova",
                 quantity = 6
@@ -96,7 +96,7 @@ namespace Restaurant.RestApi.Tests
 
             var response = await service.PostReservation(new
             {
-                at = "2022-03-18 17:30",
+                at = "2023-03-18 17:30",
                 email = "shli@example.org",
                 name = "Shanghai Li",
                 quantity = 5

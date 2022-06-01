@@ -9,11 +9,11 @@
 
         internal Reservation? Validate()
         {
-            if(!DateTime.TryParse(At, out var d))
+            if (!DateTime.TryParse(At, out var d))
                 return null;
             if (Email is null)
                 return null;
-            if(Quantity < 1)
+            if (Quantity < 1)
                 return null;
 
             return new Reservation(d, Email, Name ?? "", Quantity);

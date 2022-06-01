@@ -5,34 +5,33 @@ using System.Globalization;
 
 namespace Restaurant.RestApi
 {
-    [Route("[controller]")]
-    [ApiController]
-    public class ReservationsController : ControllerBase
+    [ApiController, Route("[controller]")]
+    public class ReservationsController
     {
-        public ReservationsController(IReservationsRepository repository)
+        public ReservationsController(
+            IReservationsRepository repository,
+            MaitreD maitreD)
         {
             Repository = repository;
+            MaitreD = maitreD;
         }
 
         public IReservationsRepository Repository { get; }
+        public MaitreD MaitreD { get; }
 
-        // POST <ReservationsController>
-        [HttpPost]
         public async Task<ActionResult> Post(ReservationDto dto)
         {
             if (dto is null)
                 throw new ArgumentNullException(nameof(dto));
-            
+
             Reservation? r = dto.Validate();
             if (r is null)
                 return new BadRequestResult();
 
-
             var reservations = await Repository
                 .ReadReservations(r.At)
                 .ConfigureAwait(false);
-            int reservedSeats = reservations.Sum(r => r.Quantity);
-            if(10 < reservedSeats + dto.Quantity)
+            if (!MaitreD.WillAccept(DateTime.Now, reservations, r))
                 return new StatusCodeResult(
                     StatusCodes.Status500InternalServerError);
 
